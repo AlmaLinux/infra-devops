@@ -1,0 +1,3 @@
+# Ignore tests tar.gz files
+.tar.gz
+.zip
