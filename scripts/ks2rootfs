@@ -1,0 +1,77 @@
+#!/bin/bash -e
+# description: build rootfs
+# param: 1. kickstart file and 2. rootfs file name to be generated
+
+
+usage() {
+    cat 1>&2 <<EOF
+Script to create roofs from kickstart file using livemedia-creator
+
+ENVIRONMENT VARS:
+BUILD_WORK_DIR     Working dir for kickstart source and image destination (default current directory)
+BUILD_KICKSTART    Input kickstart source file (.ks)
+BUILD_ROOTFS       Rootfs output file name
+
+USAGE:
+    ks2rootfs KICKSTART_FILE_NAME ROOTFS_FILE_NAME
+
+EXAMPLES:
+    ks2rootfs centos8-minimal.ks centos8-minimal.tar.xz
+EOF
+}
+
+BUILD_WORK_DIR=${BUILD_WORK_DIR:-./}
+BUILD_KICKSTART=${BUILD_KICKSTART:-$1}
+BUILD_ROOTFS=${BUILD_ROOTFS:-$2}
+BUILD_OUTDIR=${BUILD_OUTDIR:-./result}
+BUILD_WRITE_META=${BUILD_WRITE_META:-true}
+BUILD_RETAIN_LOG=${BUILD_RETAIN_LOG:-false}
+
+
+if [ -z ${BUILD_KICKSTART} ] || [ -z ${BUILD_ROOTFS} ]
+then
+  echo "Please provide two parameters, kickstart source file and rootfs output file name"
+  usage
+  exit 1
+fi
+
+# set anaconda base product
+cat << _EOF > /etc/anaconda/product.d/ks2rootfs.conf
+# Anaconda configuration file for Kickstart to Rootfs.
+
+[Product]
+product_name = Kickstart to Rootfs
+
+[Base Product]
+product_name = AlmaLinux
+
+[Storage]
+file_system_type =
+
+[License]
+eula =
+_EOF
+
+# create rootfs
+livemedia-creator --logfile="/tmp/rootfs-creator.log" \
+    --make-tar --ks="${BUILD_WORK_DIR}/${BUILD_KICKSTART}" --no-virt \
+    --image-only --image-name="${BUILD_ROOTFS}" \
+    --anaconda-arg "--product Kickstart to Rootfs"
+
+# move rootfs to working dir
+cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_WORK_DIR}/${BUILD_ROOTFS}
+
+# extract os-release info
+tar -xvf /var/tmp/${BUILD_ROOTFS} -C /tmp/ --strip-components=3 ./usr/lib/os-release
+os_release_id=$(awk -F= '$1=="ID" { print $2 ;}' /tmp/os-release | tr -d '"')
+distro_release=$(grep "${os_release_id}.*-release-" /tmp/anaconda/packaging.log | grep -o "Verifying:.*" | sed -n 's/Verifying: //p')
+
+if [ -z ${distro_release+x} ]; then
+    exit 1
+else
+    # save distro release info
+    echo "$distro_release" > ${BUILD_WORK_DIR}/distro-release
+fi
+
+# save list of packages installed
+jq .[] -r /tmp/dnf.cache/tempfiles.json | awk -F '/' '{print $5}' | sort > ${BUILD_WORK_DIR}/pkgs-list
