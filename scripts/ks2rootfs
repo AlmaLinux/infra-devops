@@ -5,28 +5,83 @@
 
 usage() {
     cat 1>&2 <<EOF
-Script to create roofs from kickstart file using livemedia-creator
+Script to create roofs file from a kickstart file using livemedia-creator
 
-ENVIRONMENT VARS:
-BUILD_WORK_DIR     Working dir for kickstart source and image destination (default current directory)
-BUILD_KICKSTART    Input kickstart source file (.ks)
-BUILD_ROOTFS       Rootfs output file name
+ENVIRONMENT VARIABLES:
+======================
+
+BUILD_KICKSTART  : Input kickstart source file (.ks) - Required
+BUILD_ROOTFS     : Rootfs output file name - Required
+
+BUILD_WORK_DIR   : Working dir for kickstart source and image destination (default current directory) - Optional
+BUILD_OUTDIR     : Output directory name in working dir - Optional
+BUILD_FLAG_OUTOUT_IN_PWD : Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
+BUILD_FLAG_WRITE_META    : Generate meta data about the kickstart build system - Optional
+BUILD_FLAG_RETAIN_LOG    : Retain generated output log files under 'logs' output directory - Optional
 
 USAGE:
     ks2rootfs KICKSTART_FILE_NAME ROOTFS_FILE_NAME
 
 EXAMPLES:
-    ks2rootfs centos8-minimal.ks centos8-minimal.tar.xz
+    ks2rootfs os-minimal.ks os-minimal.tar.xz
+EOF
+}
+
+run-summary() {
+    cat 1>&2 <<EOF
+
+ks2rootfs - Script input summary:
+
+FLAGS
+-----
+FLAG_OUTOUT_PWD : ${BUILD_FLAG_OUTOUT_IN_PWD}
+FLAG_WRITE_META : ${BUILD_FLAG_WRITE_META}
+FLAG_RETAIN_LOG : ${BUILD_FLAG_RETAIN_LOG}
+
+VARIABLES
+---------
+BUILD_WORK_DIR  : ${BUILD_WORK_DIR}
+BUILD_OUTDIR    : ${BUILD_OUTDIR}
+BUILD_LOGDIR    : ${BUILD_LOGDIR}
+INPUT_KICKSTART : ${BUILD_WORK_DIR}${BUILD_KICKSTART}
+OUTPUT_ROOTFS   : ${BUILD_OUTDIR}/${BUILD_ROOTFS}
+
 EOF
 }
 
 BUILD_WORK_DIR=${BUILD_WORK_DIR:-./}
 BUILD_KICKSTART=${BUILD_KICKSTART:-$1}
 BUILD_ROOTFS=${BUILD_ROOTFS:-$2}
-BUILD_OUTDIR=${BUILD_OUTDIR:-./result}
-BUILD_WRITE_META=${BUILD_WRITE_META:-true}
-BUILD_RETAIN_LOG=${BUILD_RETAIN_LOG:-false}
+BUILD_FLAG_WRITE_META=${BUILD_FLAG_WRITE_META:-true}
+BUILD_FLAG_RETAIN_LOG=${BUILD_FLAG_RETAIN_LOG:-false}
+BUILD_FLAG_OUTOUT_IN_PWD=${BUILD_FLAG_OUTOUT_IN_PWD:-false}
 
+USE_PWD_OUTPUT=${USE_PWD_OUTPUT:-false}
+
+BUILD_OUTDIR=${BUILD_OUTDIR:-result}
+BUILD_LOGDIR=${BUILD_OUTDIR}/logs
+
+if [ ${BUILD_FLAG_OUTOUT_IN_PWD} == 'true' ]; then
+    echo 'Build output files will be in current working folder ... ' 
+    BUILD_OUTDIR=${BUILD_WORK_DIR}
+else
+    BUILD_OUTDIR=${BUILD_WORK_DIR}${BUILD_OUTDIR:-result}
+    echo "Build output files will be in '${BUILD_OUTDIR}' folder ... " 
+    if [[ -d "${BUILD_OUTDIR}" ]]; then
+        echo "Output directory ${BUILD_OUTDIR} already exists, please remove it"
+        exit 1
+    fi
+    mkdir -p ${BUILD_OUTDIR}
+    if [[ -d "${BUILD_OUTDIR}" ]]; then
+        echo "Output directory ${BUILD_OUTDIR} created successfully"
+    else    
+        echo "Error in creating output directory: ${BUILD_OUTDIR}"
+        exit 1
+    fi
+fi
+
+
+BUILD_LOGDIR=${BUILD_OUTDIR}/logs
 
 if [ -z ${BUILD_KICKSTART} ] || [ -z ${BUILD_ROOTFS} ]
 then
@@ -34,6 +89,9 @@ then
   usage
   exit 1
 fi
+
+# Write run summary to console
+run-summary
 
 # set anaconda base product
 cat << _EOF > /etc/anaconda/product.d/ks2rootfs.conf
@@ -53,25 +111,38 @@ eula =
 _EOF
 
 # create rootfs
-livemedia-creator --logfile="/tmp/rootfs-creator.log" \
+livemedia-creator --logfile="/tmp/ks2rootfs.log" \
     --make-tar --ks="${BUILD_WORK_DIR}/${BUILD_KICKSTART}" --no-virt \
     --image-only --image-name="${BUILD_ROOTFS}" \
     --anaconda-arg "--product Kickstart to Rootfs"
 
-# move rootfs to working dir
-cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_WORK_DIR}/${BUILD_ROOTFS}
+# copy rootfs to working dir
+cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_OUTDIR}/${BUILD_ROOTFS}
 
-# extract os-release info
-tar -xvf /var/tmp/${BUILD_ROOTFS} -C /tmp/ --strip-components=3 ./usr/lib/os-release
-os_release_id=$(awk -F= '$1=="ID" { print $2 ;}' /tmp/os-release | tr -d '"')
-distro_release=$(grep "${os_release_id}.*-release-" /tmp/anaconda/packaging.log | grep -o "Verifying:.*" | sed -n 's/Verifying: //p')
-
-if [ -z ${distro_release+x} ]; then
-    exit 1
+if [ ${BUILD_FLAG_WRITE_META} == 'true' ]; then
+    # extract os-release info
+    tar -xvf /var/tmp/${BUILD_ROOTFS} -C /tmp/ --strip-components=3 ./usr/lib/os-release
+    os_release_id=$(awk -F= '$1=="ID" { print $2 ;}' /tmp/os-release | tr -d '"')
+    distro_release=$(grep "${os_release_id}.*-release-" /tmp/anaconda/packaging.log | grep -o "Verifying:.*" | sed -n 's/Verifying: //p')
+    if [ -z ${distro_release+x} ]; then
+        exit 1
+    else
+        echo 'Writting meta data ... ' 
+        # save distro release info
+        echo "$distro_release" > ${BUILD_OUTDIR}/distro-release
+    fi
+    # save list of packages installed
+    jq .[] -r /tmp/dnf.cache/tempfiles.json | awk -F '/' '{print $5}' | sort > ${BUILD_OUTDIR}/pkgs-list
 else
-    # save distro release info
-    echo "$distro_release" > ${BUILD_WORK_DIR}/distro-release
+    echo 'Skip writing meta data based on configuration.' 
 fi
 
-# save list of packages installed
-jq .[] -r /tmp/dnf.cache/tempfiles.json | awk -F '/' '{print $5}' | sort > ${BUILD_WORK_DIR}/pkgs-list
+if [ ${BUILD_FLAG_RETAIN_LOG} == 'true' ]; then
+    rm -rf ${BUILD_LOGDIR}
+    mkdir -p ${BUILD_LOGDIR} ${BUILD_LOGDIR}/anaconda
+    echo "Copying logs to '${BUILD_LOGDIR}'" 
+    cp /tmp/ks2rootfs.log rm -rf ${BUILD_LOGDIR}/ks2rootfs.log 
+    cp -rp /tmp/anaconda/* ${BUILD_LOGDIR}/anaconda
+else
+    echo 'Skip writing logs data based on configuration (default). '
+fi

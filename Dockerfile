@@ -1,7 +1,11 @@
+# ----------------------------------------------------------------------------
+# Multi stage build, using Micro version AlmaLinux as foundation for end image
+# Final image designed for specific purposes, don't have dnf, microdnf or yum
+# ----------------------------------------------------------------------------
 FROM almalinux:8 as builder
 
 RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
-    dnf install --installroot /mnt/system-root  --releasever 8 --setopt=install_weak_deps=false --setopt=tsflags=nodocs -y coreutils-single \
+    dnf install --installroot /mnt/system-root  --releasever 8 --setopt=install_weak_deps=False --setopt=tsflags=nodocs -y coreutils-single \
     bash \
     glibc-minimal-langpack \
     anaconda-tui \
@@ -9,6 +13,7 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
     jq \
     tar \
     policycoreutils \
+    # Optional include to avoid runtime warning -- starts
     libblockdev-mdraid  \
     libblockdev-crypto \
     libblockdev-lvm \
@@ -17,11 +22,13 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
     libblockdev-loop \
     libblockdev-nvdimm \
     libblockdev-mpath \
+    # Optional include to avoid runtime warning -- ends
     rootfiles; \
     rm -rf /mnt/system-root/var/cache/* ; \
     dnf clean all; \
     cp /etc/yum.repos.d/* /mnt/system-root/etc/yum.repos.d/ ; \
     rm -rf /var/cache/yum; \
+    # TODO: commands below move to side script or remove?
     # generate build time file for compatibility with CentOS
     /bin/date +%Y%m%d_%H%M > /mnt/system-root/etc/BUILDTIME ;\
     # set DNF infra variable to container for compatibility with CentOS
