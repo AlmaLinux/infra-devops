@@ -14,7 +14,7 @@ docker build -t srbala/ks2rootfs .
 
 ### Using Image
 
-Following command uses the `kickstarts/almalinux-8-default.x86_64.ks` file to build.
+Following command under `tests` folder. Run command uses the `kickstarts/almalinux-8-default.x86_64.ks` file to build.
 
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
