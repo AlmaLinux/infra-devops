@@ -118,7 +118,7 @@ livemedia-creator --logfile="/tmp/ks2rootfs.log" \
 
 # copy rootfs to working dir
 cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_OUTDIR}/${BUILD_ROOTFS}
-echo 'Copied disk image from /var/tmp/${BUILD_ROOTFS} to ${BUILD_OUTDIR}/${BUILD_ROOTFS}'
+echo "Copied disk image from /var/tmp/${BUILD_ROOTFS} to ${BUILD_OUTDIR}/${BUILD_ROOTFS}"
 
 if [ ${BUILD_FLAG_WRITE_META} == 'true' ]; then
     # extract os-release info
