@@ -10,14 +10,14 @@ Script to create roofs file from a kickstart file using livemedia-creator
 ENVIRONMENT VARIABLES:
 ======================
 
-BUILD_KICKSTART  : Input kickstart source file (.ks) - Required
-BUILD_ROOTFS     : Rootfs output file name - Required
+BUILD_KICKSTART  : Reuired - Input kickstart source file (.ks)
+BUILD_ROOTFS     : Required - Rootfs output file name 
 
-BUILD_WORK_DIR   : Working dir for kickstart source and image destination (default current directory) - Optional
-BUILD_OUTDIR     : Output directory name in working dir - Optional
-BUILD_FLAG_OUTOUT_IN_PWD : Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
-BUILD_FLAG_WRITE_META    : Generate meta data about the kickstart build system - Optional
-BUILD_FLAG_RETAIN_LOG    : Retain generated output log files under 'logs' output directory - Optional
+BUILD_WORK_DIR   : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
+BUILD_OUTDIR     : Optional - Output directory name in working dir (default - 'result') - Optional
+BUILD_FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
+BUILD_FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
+BUILD_FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
 
 USAGE:
     ks2rootfs KICKSTART_FILE_NAME ROOTFS_FILE_NAME
@@ -118,6 +118,7 @@ livemedia-creator --logfile="/tmp/ks2rootfs.log" \
 
 # copy rootfs to working dir
 cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_OUTDIR}/${BUILD_ROOTFS}
+echo 'Copied disk image from /var/tmp/${BUILD_ROOTFS} to ${BUILD_OUTDIR}/${BUILD_ROOTFS}'
 
 if [ ${BUILD_FLAG_WRITE_META} == 'true' ]; then
     # extract os-release info
@@ -133,6 +134,7 @@ if [ ${BUILD_FLAG_WRITE_META} == 'true' ]; then
     fi
     # save list of packages installed
     jq .[] -r /tmp/dnf.cache/tempfiles.json | awk -F '/' '{print $5}' | sort > ${BUILD_OUTDIR}/pkgs-list
+    echo 'Writting meta data completed.'
 else
     echo 'Skip writing meta data based on configuration.' 
 fi
@@ -140,9 +142,10 @@ fi
 if [ ${BUILD_FLAG_RETAIN_LOG} == 'true' ]; then
     rm -rf ${BUILD_LOGDIR}
     mkdir -p ${BUILD_LOGDIR} ${BUILD_LOGDIR}/anaconda
-    echo "Copying logs to '${BUILD_LOGDIR}'" 
+    echo "Copying logs to '${BUILD_LOGDIR}' ..." 
     cp /tmp/ks2rootfs.log rm -rf ${BUILD_LOGDIR}/ks2rootfs.log 
     cp -rp /tmp/anaconda/* ${BUILD_LOGDIR}/anaconda
+    echo 'Copying logs completed.'
 else
-    echo 'Skip writing logs data based on configuration (default). '
+    echo 'Skip copying logs data based on configuration (default). '
 fi
