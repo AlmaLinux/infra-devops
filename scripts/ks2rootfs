@@ -1,7 +1,7 @@
 #!/bin/bash -e
-# description: build rootfs
-# param: 1. kickstart file and 2. rootfs file name to be generated
-
+# description: CI/CD Utility helper. Builds linux rootfs file from kickstart input file in docker/podman enviroment
+#       param: 1. kickstart file and 2. rootfs file name to be generated
+# license: MIT.
 
 usage() {
     cat 1>&2 <<EOF
@@ -149,3 +149,12 @@ if [ ${BUILD_FLAG_RETAIN_LOG} == 'true' ]; then
 else
     echo 'Skip copying logs data based on configuration (default). '
 fi
+
+cat << _EOF > "${BUILD_OUTDIR}/Dockerfile"
+# This file auto generated from 'ks2rootfs' script, any changes will be over-written
+FROM scratch
+ADD ${BUILD_ROOTFS} /
+
+CMD ["/bin/bash"]
+_EOF
+echo "Generating '${BUILD_OUTDIR}/Dockerfile' completed."
