@@ -44,7 +44,7 @@ BUILD_KICKSTART  : Reuired - Input kickstart source file (.ks)
 BUILD_ROOTFS     : Required - Rootfs output file name 
 
 BUILD_WORK_DIR   : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
-BUILD_OUTDIR     : Optional - Output directory name in working dir (default - 'result') - Optional
+BUILD_OUTDIR     : Optional - Output directory name in working directory. Ddefault value is 'result'.
 BUILD_FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
 BUILD_FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
 BUILD_FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
