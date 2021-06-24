@@ -9,7 +9,7 @@ Image yet ot published in `hub.docker.com`, until then use local build.
 ### Building local
 
 ```sh
-docker build -t srbala/ks2rootfs:alma .
+docker build -t almalinux/ks2rootfs .
 ```
 
 ### Using Image
@@ -23,7 +23,7 @@ docker run --rm --privileged -v "$PWD:/build:z" \
     -e BUILD_KICKSTART=kickstarts/almalinux-8-default.x86_64.ks \
     -e BUILD_ROOTFS=almalinux-8-docker-default.x86_64.tar.gz \
     -e BUILD_OUTDIR=default \
-    srbala/ks2rootfs:alma
+    almalinux/ks2rootfs
 ```
 
 Use command below to create `minimal` docker files
@@ -33,7 +33,7 @@ docker run --rm --privileged -v "$PWD:/build:z" \
     -e BUILD_KICKSTART=kickstarts/almalinux-8-minimal.x86_64.ks \
     -e BUILD_ROOTFS=almalinux-8-docker-minimal.x86_64.tar.gz \
     -e BUILD_OUTDIR=minimal \
-    srbala/ks2rootfs:alma
+    almalinux/ks2rootfs
 ```
 
 ### Environment variables
