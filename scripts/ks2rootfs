@@ -18,7 +18,7 @@ BUILD_OUTDIR     : Optional - Output directory name in working dir (default - 'r
 BUILD_FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
 BUILD_FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
 BUILD_FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
-
+BUILD_COMPTYPE   : Optional - Build compression type default 'xz', gzip and lzma.
 USAGE:
     ks2rootfs KICKSTART_FILE_NAME ROOTFS_FILE_NAME
 
@@ -45,6 +45,7 @@ BUILD_OUTDIR    : ${BUILD_OUTDIR}
 BUILD_LOGDIR    : ${BUILD_LOGDIR}
 INPUT_KICKSTART : ${BUILD_WORK_DIR}${BUILD_KICKSTART}
 OUTPUT_ROOTFS   : ${BUILD_OUTDIR}/${BUILD_ROOTFS}
+BUILD_COMPTYPE  : ${BUILD_COMPTYPE}
 
 EOF
 }
@@ -55,6 +56,7 @@ BUILD_ROOTFS=${BUILD_ROOTFS:-$2}
 BUILD_FLAG_WRITE_META=${BUILD_FLAG_WRITE_META:-true}
 BUILD_FLAG_RETAIN_LOG=${BUILD_FLAG_RETAIN_LOG:-false}
 BUILD_FLAG_OUTOUT_IN_PWD=${BUILD_FLAG_OUTOUT_IN_PWD:-false}
+BUILD_COMPTYPE=${BUILD_COMPTYPE:-xz}
 
 USE_PWD_OUTPUT=${USE_PWD_OUTPUT:-false}
 
@@ -98,7 +100,7 @@ cat << _EOF > /etc/anaconda/product.d/ks2rootfs.conf
 # Anaconda configuration file for Kickstart to Rootfs.
 
 [Product]
-product_name = Kickstart to Rootfs
+product_name = Kickstart to RootFS
 
 [Base Product]
 product_name = AlmaLinux
@@ -114,7 +116,8 @@ _EOF
 livemedia-creator --logfile="/tmp/ks2rootfs.log" \
     --make-tar --ks="${BUILD_WORK_DIR}/${BUILD_KICKSTART}" --no-virt \
     --image-only --image-name="${BUILD_ROOTFS}" \
-    --anaconda-arg "--product Kickstart to Rootfs"
+    --anaconda-arg "--product Kickstart to RootFS" \
+    --compression ${BUILD_COMPTYPE}
 
 # copy rootfs to working dir
 cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_OUTDIR}/${BUILD_ROOTFS}
