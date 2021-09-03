@@ -10,6 +10,7 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
     glibc-minimal-langpack \
     anaconda-tui \
     lorax \
+    subscription-manager \
     jq \
     tar \
     policycoreutils \
