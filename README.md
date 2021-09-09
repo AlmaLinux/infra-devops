@@ -20,9 +20,9 @@ Use command below to create `default` docker files
 
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
-    -e BUILD_KICKSTART=kickstarts/almalinux-8-default.x86_64.ks \
-    -e BUILD_ROOTFS=almalinux-8-docker-default.x86_64.tar.gz \
-    -e BUILD_OUTDIR=default \
+    -e KICKSTART_FILE=kickstarts/almalinux-8-default.x86_64.ks \
+    -e IMAGE_NAME=almalinux-8-docker-default.x86_64.tar.gz \
+    -e OUTPUT_DIR=default \
     almalinux/ks2rootfs
 ```
 
@@ -30,9 +30,9 @@ Use command below to create `minimal` docker files
 
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
-    -e BUILD_KICKSTART=kickstarts/almalinux-8-minimal.x86_64.ks \
-    -e BUILD_ROOTFS=almalinux-8-docker-minimal.x86_64.tar.gz \
-    -e BUILD_OUTDIR=minimal \
+    -e KICKSTART_FILE=kickstarts/almalinux-8-minimal.x86_64.ks \
+    -e IMAGE_NAME=almalinux-8-docker-minimal.x86_64.tar.gz \
+    -e OUTPUT_DIR=minimal \
     almalinux/ks2rootfs
 ```
 
@@ -44,14 +44,14 @@ Container startup script `ks2rootfs` supports multiple environment varible to cu
 ENVIRONMENT VARIABLES:
 ======================
 
-BUILD_KICKSTART  : Reuired - Input kickstart source file (.ks)
-BUILD_ROOTFS     : Required - Rootfs output file name 
+KICKSTART_FILE  : Reuired - Input kickstart source file (.ks)
+IMAGE_NAME     : Required - Rootfs output file name 
 
 BUILD_WORK_DIR   : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
-BUILD_OUTDIR     : Optional - Output directory name in working directory. Ddefault value is 'result'.
-BUILD_FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
-BUILD_FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
-BUILD_FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
+OUTPUT_DIR     : Optional - Output directory name in working directory. Ddefault value is 'result'.
+FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `OUTPUT_DIR` will be ignored.
+FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
+FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
 
 
 USAGE:

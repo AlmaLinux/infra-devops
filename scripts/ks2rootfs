@@ -10,14 +10,14 @@ Script to create roofs file from a kickstart file using livemedia-creator
 ENVIRONMENT VARIABLES:
 ======================
 
-BUILD_KICKSTART  : Reuired - Input kickstart source file (.ks)
-BUILD_ROOTFS     : Required - Rootfs output file name 
+KICKSTART_FILE  : Reuired - Input kickstart source file (.ks)
+IMAGE_NAME     : Required - Rootfs output file name 
 
 BUILD_WORK_DIR   : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
-BUILD_OUTDIR     : Optional - Output directory name in working dir (default - 'result') - Optional
-BUILD_FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `BUILD_OUTDIR` will be ignored.
-BUILD_FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
-BUILD_FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
+OUTPUT_DIR     : Optional - Output directory name in working dir (default - 'result') - Optional
+FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `OUTPUT_DIR` will be ignored.
+FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
+FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
 BUILD_COMPTYPE   : Optional - Build compression type default 'xz', gzip and lzma.
 USAGE:
     ks2rootfs KICKSTART_FILE_NAME ROOTFS_FILE_NAME
@@ -34,58 +34,73 @@ ks2rootfs - Script input summary:
 
 FLAGS
 -----
-FLAG_OUTOUT_PWD : ${BUILD_FLAG_OUTOUT_IN_PWD}
-FLAG_WRITE_META : ${BUILD_FLAG_WRITE_META}
-FLAG_RETAIN_LOG : ${BUILD_FLAG_RETAIN_LOG}
+FLAG_OUTOUT_PWD : ${FLAG_OUTOUT_IN_PWD}
+FLAG_WRITE_META : ${FLAG_WRITE_META}
+FLAG_RETAIN_LOG : ${FLAG_RETAIN_LOG}
 
 VARIABLES
 ---------
 BUILD_WORK_DIR  : ${BUILD_WORK_DIR}
-BUILD_OUTDIR    : ${BUILD_OUTDIR}
+OUTPUT_DIR      : ${OUTPUT_DIR}
 BUILD_LOGDIR    : ${BUILD_LOGDIR}
-INPUT_KICKSTART : ${BUILD_WORK_DIR}${BUILD_KICKSTART}
-OUTPUT_ROOTFS   : ${BUILD_OUTDIR}/${BUILD_ROOTFS}
+INPUT_KICKSTART : ${BUILD_WORK_DIR}${KICKSTART_FILE}
+OUTPUT_ROOTFS   : ${OUTPUT_DIR}/${IMAGE_NAME}
 BUILD_COMPTYPE  : ${BUILD_COMPTYPE}
-
+BUILD_TYPE      : ${BUILD_TYPE}
 EOF
 }
 
 BUILD_WORK_DIR=${BUILD_WORK_DIR:-./}
-BUILD_KICKSTART=${BUILD_KICKSTART:-$1}
-BUILD_ROOTFS=${BUILD_ROOTFS:-$2}
-BUILD_FLAG_WRITE_META=${BUILD_FLAG_WRITE_META:-true}
-BUILD_FLAG_RETAIN_LOG=${BUILD_FLAG_RETAIN_LOG:-false}
-BUILD_FLAG_OUTOUT_IN_PWD=${BUILD_FLAG_OUTOUT_IN_PWD:-false}
+KICKSTART_FILE=${KICKSTART_FILE:-$1}
+IMAGE_NAME=${IMAGE_NAME:-$2}
+FLAG_WRITE_META=${FLAG_WRITE_META:-false}
+FLAG_RETAIN_LOG=${FLAG_RETAIN_LOG:-false}
+FLAG_OUTOUT_IN_PWD=${FLAG_OUTOUT_IN_PWD:-false}
 BUILD_COMPTYPE=${BUILD_COMPTYPE:-xz}
+BUILD_TYPE=${BUILD_TYPE:-default}
+TYPE='default'
 
 USE_PWD_OUTPUT=${USE_PWD_OUTPUT:-false}
 
-BUILD_OUTDIR=${BUILD_OUTDIR:-result}
-BUILD_LOGDIR=${BUILD_OUTDIR}/logs
+OUTPUT_DIR=${OUTPUT_DIR:-result}
+BUILD_LOGDIR=${OUTPUT_DIR}/logs
 
-if [ ${BUILD_FLAG_OUTOUT_IN_PWD} == 'true' ]; then
+if [ ${FLAG_OUTOUT_IN_PWD} == 'true' ]; then
     echo 'Build output files will be in current working folder ... ' 
-    BUILD_OUTDIR=${BUILD_WORK_DIR}
+    OUTPUT_DIR=${BUILD_WORK_DIR}
 else
-    BUILD_OUTDIR=${BUILD_WORK_DIR}${BUILD_OUTDIR:-result}
-    echo "Build output files will be in '${BUILD_OUTDIR}' folder ... " 
-    if [[ -d "${BUILD_OUTDIR}" ]]; then
-        echo "Output directory ${BUILD_OUTDIR} already exists, please remove it"
+    OUTPUT_DIR=${BUILD_WORK_DIR}${OUTPUT_DIR:-result}
+    echo "Build output files will be in '${OUTPUT_DIR}' folder ... " 
+    if [[ -d "${OUTPUT_DIR}" ]]; then
+        echo "Output directory ${OUTPUT_DIR} already exists, please remove it"
         exit 1
     fi
-    mkdir -p ${BUILD_OUTDIR}
-    if [[ -d "${BUILD_OUTDIR}" ]]; then
-        echo "Output directory ${BUILD_OUTDIR} created successfully"
+    mkdir -p ${OUTPUT_DIR}
+    if [[ -d "${OUTPUT_DIR}" ]]; then
+        echo "Output directory ${OUTPUT_DIR} created successfully"
     else    
-        echo "Error in creating output directory: ${BUILD_OUTDIR}"
+        echo "Error in creating output directory: ${OUTPUT_DIR}"
         exit 1
     fi
 fi
 
+case "${BUILD_TYPE}" in
+    base|default|init|micro|minimal|wsl)
+        TYPE="${BUILD_TYPE}"
+        ;;
+    *)
+        echo "Error: unsupported build type ${BUILD_TYPE}" 1>&2
+        exit 1
+        ;;
+esac
 
-BUILD_LOGDIR=${BUILD_OUTDIR}/logs
+if [ ${TYPE} == 'wsl' ]; then
+  BUILD_COMPTYPE = 'gzip'
+fi
 
-if [ -z ${BUILD_KICKSTART} ] || [ -z ${BUILD_ROOTFS} ]
+BUILD_LOGDIR=${OUTPUT_DIR}/logs
+
+if [ -z ${KICKSTART_FILE} ] || [ -z ${IMAGE_NAME} ]
 then
   echo "Please provide two parameters, kickstart source file and rootfs output file name"
   usage
@@ -114,18 +129,23 @@ _EOF
 
 # create rootfs
 livemedia-creator --logfile="/tmp/ks2rootfs.log" \
-    --make-tar --ks="${BUILD_WORK_DIR}/${BUILD_KICKSTART}" --no-virt \
-    --image-only --image-name="${BUILD_ROOTFS}" \
+    --make-tar --ks="${BUILD_WORK_DIR}/${KICKSTART_FILE}" --no-virt \
+    --image-only --image-name="${IMAGE_NAME}" \
     --anaconda-arg "--product Kickstart to RootFS" \
     --compression ${BUILD_COMPTYPE}
 
 # copy rootfs to working dir
-cp -rp /var/tmp/${BUILD_ROOTFS} ${BUILD_OUTDIR}/${BUILD_ROOTFS}
-echo "Copied disk image from /var/tmp/${BUILD_ROOTFS} to ${BUILD_OUTDIR}/${BUILD_ROOTFS}"
+cp -rp /var/tmp/${IMAGE_NAME} ${OUTPUT_DIR}/${IMAGE_NAME}
+echo "Copied disk image from /var/tmp/${IMAGE_NAME} to ${OUTPUT_DIR}/${IMAGE_NAME}"
+# save list of packages installed
+jq .[] -r /tmp/dnf.cache/tempfiles.json | awk -F '/' '{print $5}' | sort > ${OUTPUT_DIR}/rpm-packags
+# cat ${OUTPUT_DIR}/rpm-packags | sed 's/-[0-9].*//g' > ${OUTPUT_DIR}/pkgs-list-only
+# cat ${OUTPUT_DIR}/rpm-packags | sed 's/.el[0-9].*//g' > ${OUTPUT_DIR}/pkgs-list
+echo "Generated '${OUTPUT_DIR}/rpm-packags' file."
 
-if [ ${BUILD_FLAG_WRITE_META} == 'true' ]; then
+if [ ${FLAG_WRITE_META} == 'true' ]; then
     # extract os-release info
-    tar -xvf /var/tmp/${BUILD_ROOTFS} -C /tmp/ --strip-components=3 ./usr/lib/os-release
+    tar -xvf /var/tmp/${IMAGE_NAME} -C /tmp/ --strip-components=3 ./usr/lib/os-release
     os_release_id=$(awk -F= '$1=="ID" { print $2 ;}' /tmp/os-release | tr -d '"')
     distro_release=$(grep "${os_release_id}.*-release-" /tmp/anaconda/packaging.log | grep -o "Verifying:.*" | sed -n 's/Verifying: //p')
     if [ -z ${distro_release+x} ]; then
@@ -133,18 +153,14 @@ if [ ${BUILD_FLAG_WRITE_META} == 'true' ]; then
     else
         echo 'Writting meta data ... ' 
         # save distro release info
-        echo "$distro_release" > ${BUILD_OUTDIR}/distro-release
+        echo "$distro_release" > ${OUTPUT_DIR}/distro-release
     fi
-    # save list of packages installed
-    jq .[] -r /tmp/dnf.cache/tempfiles.json | awk -F '/' '{print $5}' | sort > ${BUILD_OUTDIR}/rpm-packags
-    # cat ${BUILD_OUTDIR}/rpm-packags | sed 's/-[0-9].*//g' > ${BUILD_OUTDIR}/pkgs-list-only
-    # cat ${BUILD_OUTDIR}/rpm-packags | sed 's/.el[0-9].*//g' > ${BUILD_OUTDIR}/pkgs-list
     echo 'Writting meta data completed.'
 else
-    echo 'Skip writing meta data based on configuration.' 
+    echo 'Skip writing meta data.' 
 fi
 
-if [ ${BUILD_FLAG_RETAIN_LOG} == 'true' ]; then
+if [ ${FLAG_RETAIN_LOG} == 'true' ]; then
     rm -rf ${BUILD_LOGDIR}
     mkdir -p ${BUILD_LOGDIR} ${BUILD_LOGDIR}/anaconda
     echo "Copying logs to '${BUILD_LOGDIR}' ..." 
@@ -155,11 +171,32 @@ else
     echo 'Skip copying logs data based on configuration (default). '
 fi
 
-cat << _EOF > "${BUILD_OUTDIR}/Dockerfile"
-# This file auto generated from 'ks2rootfs' script, any changes will be over-written
-FROM scratch
-ADD ${BUILD_ROOTFS} /
+STARTCMD=$( cat <<EOF
 
 CMD ["/bin/bash"]
-_EOF
-echo "Generating '${BUILD_OUTDIR}/Dockerfile' completed."
+EOF
+)
+
+if [ ${TYPE} == 'init' ]; then
+  STARTCMD=$( cat <<EOF
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/bin/init"]
+EOF
+)
+fi
+
+if [ ${TYPE} == 'micro' ]; then
+  STARTCMD=$( cat <<EOF
+
+CMD ["/bin/sh"]
+EOF
+)
+fi
+
+cat << EOF > "${OUTPUT_DIR}/Dockerfile"
+FROM scratch
+ADD ${IMAGE_NAME} /
+${STARTCMD}
+EOF
+echo "Generating '${OUTPUT_DIR}/Dockerfile' completed."
