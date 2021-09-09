@@ -4,7 +4,7 @@
 # ----------------------------------------------------------------------------
 FROM almalinux:8 as builder
 
-RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
+RUN mkdir -p /mnt/system-root /mnt/system-root/build /mnt/system-root/run/lock; \
     dnf install --installroot /mnt/system-root  --releasever 8 --setopt=install_weak_deps=False --setopt=tsflags=nodocs -y coreutils-single \
     bash \
     glibc-minimal-langpack \
@@ -14,6 +14,7 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
     jq \
     tar \
     policycoreutils \
+    pykickstart \
     # Optional include to avoid runtime warning -- starts
     libblockdev-mdraid  \
     libblockdev-crypto \
@@ -24,7 +25,8 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
     libblockdev-nvdimm \
     libblockdev-mpath \
     # Optional include to avoid runtime warning -- ends
-    rootfiles; \
+    rootfiles \
+    util-linux-ng; \
     rm -rf /mnt/system-root/var/cache/* ; \
     dnf clean all; \
     cp /etc/yum.repos.d/* /mnt/system-root/etc/yum.repos.d/ ; \
@@ -36,8 +38,8 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build; \
     echo 'container' > /mnt/system-root/etc/dnf/vars/infra; \
     # install only en_US.UTF-8 locale files, see
     # https://fedoraproject.org/wiki/Changes/Glibc_locale_subpackaging for details
-    echo '%_install_langs en_US.UTF-8' > /mnt/system-root/etc/rpm/macros.image-language-conf ;\
-    touch /mnt/system-root/etc/machine-id
+    echo '%_install_langs en_US.UTF-8' > /mnt/system-root/etc/rpm/macros.image-language-conf; \
+    touch /mnt/system-root/etc/machine-id;
 
 COPY scripts/ /mnt/system-root/usr/bin
 
