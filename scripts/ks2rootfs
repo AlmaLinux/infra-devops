@@ -11,14 +11,16 @@ ENVIRONMENT VARIABLES:
 ======================
 
 KICKSTART_FILE  : Reuired - Input kickstart source file (.ks)
-IMAGE_NAME     : Required - Rootfs output file name 
+IMAGE_NAME      : Required - Rootfs output file name 
 
-BUILD_WORK_DIR   : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
-OUTPUT_DIR     : Optional - Output directory name in working dir (default - 'result') - Optional
-FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `OUTPUT_DIR` will be ignored.
-FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
-FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
-BUILD_COMPTYPE   : Optional - Build compression type default 'xz', gzip and lzma.
+BUILD_WORK_DIR     : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
+OUTPUT_DIR         : Optional - Output directory name in working dir (default - 'result') - Optional
+FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is 'false'. When value is set to 'true', any value passed to 'OUTPUT_DIR' will be ignored.
+FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is 'true'.
+FLAG_RETAIN_LOG    : Optional - When enabled, generated logs files retained under 'logs' output directory. Default value is 'false'.
+BUILD_COMPTYPE     : Optional - Build compression type default 'xz', 'gzip' and 'lzma'.
+BUILD_TYPE         : Optional - Build type 'base', 'default', 'init', 'micro', 'minimal' and 'wsl', Default value is 'default'.
+
 USAGE:
     ks2rootfs KICKSTART_FILE_NAME ROOTFS_FILE_NAME
 

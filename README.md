@@ -23,16 +23,29 @@ docker run --rm --privileged -v "$PWD:/build:z" \
     -e KICKSTART_FILE=kickstarts/almalinux-8-default.x86_64.ks \
     -e IMAGE_NAME=almalinux-8-docker-default.x86_64.tar.gz \
     -e OUTPUT_DIR=default \
+    -e BUILD_TYPE=default \
     almalinux/ks2rootfs
 ```
 
-Use command below to create `minimal` docker files
+Use command below to create `base` docker files
 
 ```sh
 docker run --rm --privileged -v "$PWD:/build:z" \
-    -e KICKSTART_FILE=kickstarts/almalinux-8-minimal.x86_64.ks \
-    -e IMAGE_NAME=almalinux-8-docker-minimal.x86_64.tar.gz \
-    -e OUTPUT_DIR=minimal \
+    -e KICKSTART_FILE=kickstarts/almalinux-8-base.x86_64.ks \
+    -e IMAGE_NAME=almalinux-8-docker-base.x86_64.tar.gz \
+    -e OUTPUT_DIR=base \
+    -e BUILD_TYPE=base \
+    almalinux/ks2rootfs
+```
+
+Use command below to create `init` docker files
+
+```sh
+docker run --rm --privileged -v "$PWD:/build:z" \
+    -e KICKSTART_FILE=kickstarts/almalinux-8-init.x86_64.ks \
+    -e IMAGE_NAME=almalinux-8-docker-init.x86_64.tar.gz \
+    -e OUTPUT_DIR=init \
+    -e BUILD_TYPE=init \
     almalinux/ks2rootfs
 ```
 
@@ -49,9 +62,11 @@ IMAGE_NAME     : Required - Rootfs output file name
 
 BUILD_WORK_DIR   : Optional - Working dir for kickstart source and image destination. Defaults to current directory.
 OUTPUT_DIR     : Optional - Output directory name in working directory. Ddefault value is 'result'.
-FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is false. When value is set to `true`, any value passed to `OUTPUT_DIR` will be ignored.
-FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is true.
-FLAG_RETAIN_LOG    : Optional - Retain generated output log files under 'logs' output directory. Default value is false.
+FLAG_OUTOUT_IN_PWD : Optional - Set this flag to true to write output files in current working directory. Default value is 'false'. When value is set to 'true', any value passed to 'OUTPUT_DIR' will be ignored.
+FLAG_WRITE_META    : Optional - Generate meta data about the kickstart build system. Default value is 'true'.
+FLAG_RETAIN_LOG    : Optional - When enabled, generated logs files retained under 'logs' output directory. Default value is 'false'.
+BUILD_COMPTYPE     : Optional - Build compression type default 'xz', 'gzip' and 'lzma'.
+BUILD_TYPE         : Optional - Build type 'base', 'default', 'init', 'micro', 'minimal' and 'wsl', Default value is 'default'.
 
 
 USAGE:
