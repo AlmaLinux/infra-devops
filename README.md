@@ -19,7 +19,7 @@ docker build -t almalinux/ks2rootfs -f Dockerfile .
 
 ### Building `almalinux/ks2rootfs:livecd-tools` image tag
 
-Use follwing command `livecd-tools` tag image to create `SIG/LiveMedia ISO` images, check GitHub [repo](https://github.com/AlmaLinux/sig-livemedia).
+Use follwing command `livecd-tools` tag image to create [`SIG/LiveMedia ISO`](https://github.com/AlmaLinux/sig-livemedia) images, check GitHub [repo](https://github.com/AlmaLinux/sig-livemedia).
 
 ```sh
 docker build -t almalinux/ks2rootfs:livecd-tools -f Dockerfile.livecd .
@@ -94,4 +94,4 @@ EXAMPLES:
 
 ## Using `almalinux/ks2rootfs:livecd-tools` Image
 
-`livecd-tools` tag image to create `SIG/LiveMedia ISO` images, check GitHub [repo](https://github.com/AlmaLinux/sig-livemedia) for more detailed use.
+`livecd-tools` tag image to create [`SIG/LiveMedia ISO`](https://github.com/AlmaLinux/sig-livemedia) images, check GitHub [repo](https://github.com/AlmaLinux/sig-livemedia) for more detailed use.
