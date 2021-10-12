@@ -64,7 +64,7 @@ TYPE='default'
 
 USE_PWD_OUTPUT=${USE_PWD_OUTPUT:-false}
 
-OUTPUT_DIR=${OUTPUT_DIR:-result}
+OUTPUT_DIR=${OUTPUT_PREFIX:-result}_$(uname -m)
 BUILD_LOGDIR=${OUTPUT_DIR}/logs
 
 if [ ${FLAG_OUTOUT_IN_PWD} == 'true' ]; then
@@ -97,7 +97,7 @@ case "${BUILD_TYPE}" in
 esac
 
 if [ ${TYPE} == 'wsl' ]; then
-  BUILD_COMPTYPE = 'gzip'
+  BUILD_COMPTYPE='gzip'
 fi
 
 BUILD_LOGDIR=${OUTPUT_DIR}/logs

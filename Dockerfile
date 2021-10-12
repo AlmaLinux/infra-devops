@@ -39,6 +39,7 @@ RUN mkdir -p /mnt/system-root /mnt/system-root/build /mnt/system-root/run/lock; 
     # install only en_US.UTF-8 locale files, see
     # https://fedoraproject.org/wiki/Changes/Glibc_locale_subpackaging for details
     echo '%_install_langs en_US.UTF-8' > /mnt/system-root/etc/rpm/macros.image-language-conf; \
+    echo 'LANG="C.UTF-8"' >  /etc/locale.conf; \
     touch /mnt/system-root/etc/machine-id;
 
 COPY scripts/ /mnt/system-root/usr/bin

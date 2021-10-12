@@ -4,21 +4,28 @@
 # ----------------------------------------------------------------------------
 FROM almalinux:8 as builder
 
-RUN dnf install -y epel-release elrepo-release && \
-    dnf upgrade -y && \
-    mkdir -p /mnt/system-root /mnt/system-root/code; \
-    dnf install --enablerepo="powertools" --enablerepo="epel" --enablerepo="elrepo" --installroot /mnt/system-root  --releasever 8 --setopt=install_weak_deps=False --setopt=tsflags=nodocs -y \
+RUN dnf install -y epel-release && \
+#    dnf upgrade -y && \
+    mkdir -p /mnt/system-root /mnt/system-root/build; \
+    dnf install --enablerepo="powertools" --enablerepo="epel" --installroot /mnt/system-root  --releasever 8 --setopt=install_weak_deps=False --setopt=tsflags=nodocs -y \
     dnf \
     systemd \
     livecd-tools \
     pykickstart \
-    hfsplus-tools \
-    grub2-efi-x64 \
-    grub2-efi-x64-cdboot \
-    shim-x64 ; \
+    grub2-efi-*64 \
+    grub2-efi-*64-cdboot \
+    shim-*64 ; \
     rm -rf /mnt/system-root/var/cache/* ; \
     dnf clean all; \
     cp /etc/yum.repos.d/* /mnt/system-root/etc/yum.repos.d/ ; \
+    /bin/date +%Y%m%d_%H%M > /mnt/system-root/etc/BUILDTIME ;\
+    # set DNF infra variable to container for compatibility with CentOS
+    echo 'container' > /mnt/system-root/etc/dnf/vars/infra; \
+    # install only en_US.UTF-8 locale files, see
+    # https://fedoraproject.org/wiki/Changes/Glibc_locale_subpackaging for details
+    echo '%_install_langs en_US.UTF-8' > /mnt/system-root/etc/rpm/macros.image-language-conf; \
+    echo 'LANG="C.utf8"' > /etc/locale.conf; \
+    touch /mnt/system-root/etc/machine-id; \
     rm -rf /var/cache/yum; 
 
 # Create Final image from scratch for ks2rootfs
@@ -26,6 +33,21 @@ FROM scratch
 
 COPY --from=builder /mnt/system-root/ /
 
-WORKDIR /code
+# systemd-udev-trigger.service \
+# systemd-udevd.service \
+# systemd-random-seed.service \
+# systemd-remount-fs.service \
+#sys-fs-fuse-connections.mount \
+RUN systemctl mask  \
+    dev-hugepages.mount \
+    systemd-logind.service \
+    getty.target \
+    console-getty.service \
+    systemd-machine-id-commit.service
 
-CMD ["/bin/bash"]
+WORKDIR /build
+
+STOPSIGNAL SIGRTMIN+3
+CMD ["/sbin/init"]
+
+#ENTRYPOINT ["/bin/bash"]
