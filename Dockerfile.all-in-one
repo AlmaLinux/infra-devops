@@ -7,14 +7,12 @@ FROM almalinux:8 as builder
 RUN dnf install -y epel-release && \
 #    dnf upgrade -y && \
     mkdir -p /mnt/system-root /mnt/system-root/build; \
-    dnf --nogpgcheck --repoid=BaseOS --repoid=AppStream --enablerepo=powertools --enablerepo="epel" \
-    --repofrompath='BaseOS,https://repo.almalinux.org/almalinux/8.5-beta/BaseOS/$basearch/kickstart/' \
-    --repofrompath='AppStream,https://repo.almalinux.org/almalinux/8.5-beta/AppStream/$basearch/kickstart/' \
-#    --repofrompath='powertools,https://repo.almalinux.org/almalinux/8/PowerTools/$basearch/kickstart/' \
+    dnf --enablerepo=powertools --enablerepo="epel" \
     install --installroot /mnt/system-root  --releasever 8 --setopt=install_weak_deps=False --setopt=tsflags=nodocs -y \
     bash \
     dnf \
-    glibc-minimal-langpack \
+    glibc-all-langpacks \
+    glibc-langpack-en \
     anaconda-tui \
     appliance-tools \
     lorax \
@@ -38,17 +36,25 @@ RUN dnf install -y epel-release && \
     systemd \
     livecd-tools \
     pykickstart \
-    grub2-efi-*64 \
-    grub2-efi-*64-cdboot \
-    shim-*64 ; \
-    cp /etc/yum.repos.d/e* /mnt/system-root/etc/yum.repos.d/ ; \
+#    grub2-efi-*64 \
+#    grub2-efi-*64-cdboot \
+#    shim-*64  \
+    tini ; \
+    # Temp fix for dnf until fix is ported to EL8
+    # imgcreate.errors.MountError: Unable to unmount filesystem at /var/tmp/imgcreate-XXXXXX/install_root/var/cache/dnf.
+    cwd=$PWD \
+    cd /mnt/system-root/usr/lib/python3.6/site-packages/dnf/ ;\
+    mv base.py base.py_saved ;\
+    curl -LO https://raw.githubusercontent.com/AlmaLinux/sig-livemedia/build-fix/work/scripts/base.py ; \
+    cd $cwd ; \
+    # cp /etc/yum.repos.d/e* /mnt/system-root/etc/yum.repos.d/ ; \
     /bin/date +%Y%m%d_%H%M > /mnt/system-root/etc/BUILDTIME ;\
     # set DNF infra variable to container for compatibility with CentOS
-    echo 'container' > /mnt/system-root/etc/dnf/vars/infra; \
+    # echo 'container' > /mnt/system-root/etc/dnf/vars/infra; \
     # install only en_US.UTF-8 locale files, see
     # https://fedoraproject.org/wiki/Changes/Glibc_locale_subpackaging for details
-    echo '%_install_langs en_US.UTF-8' > /mnt/system-root/etc/rpm/macros.image-language-conf; \
-    echo 'LANG="C.utf8"' > /mnt/system-root/etc/locale.conf; \
+    # echo '%_install_langs en_US.UTF-8' > /mnt/system-root/etc/rpm/macros.image-language-conf; \
+    echo 'LANG="en_US.UTF-8"' > /mnt/system-root/etc/locale.conf; \
     touch /mnt/system-root/etc/machine-id; \
     rm -rf /var/cache/yum; 
 #
@@ -67,8 +73,8 @@ RUN systemctl mask  \
     systemd-machine-id-commit.service
 
 WORKDIR /build
+ENTRYPOINT [ "tini", "--" ]
 
-STOPSIGNAL SIGRTMIN+3
-CMD ["/sbin/init"]
+CMD ["/bin/bash"]
 
 #ENTRYPOINT ["/bin/bash"]
