@@ -1,0 +1,10 @@
+#cloud-config
+# vim: syntax=yaml
+# Enable password authentication and inject SSH public key
+#
+ssh_pwauth: true
+chpasswd:
+  expire: false
+password: change_password
+ssh_authorized_keys:
+  - ssh-ed25519 AAAAC3NzaC1lZDI1NTEMySSHtextChangeME6e7G7yhe9kaKO/BgmZD1IHYzxfGzrbYgso email@changeme.com
