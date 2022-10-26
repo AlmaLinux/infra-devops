@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Author: @LHKN
+# Desc: Handy util to create VMs for testing
+vm_name=$1
+iso=$2
+disk_size=$3
+
+
+sudo virt-install \
+    --connect qemu:///system \
+    --name "$vm_name" \
+    --memory 16384 \
+    --vcpus "4" \
+    --cdrom "$iso" \
+    --os-variant almalinux8 \
+    --disk size="$disk_size",format=qcow2 \
+    --network network=default,model=virtio \
+    --video model=virtio \
+    --graphics vnc,listen=0.0.0.0 --noautoconsole \
+    --virt-type kvm
