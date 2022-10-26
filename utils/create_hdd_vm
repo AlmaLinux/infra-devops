@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Author: @LKHN
+# Desc: Create VM using HDD file
+name='rhel-8.7-beta-1-test-1'
+memory='4096'
+vcpus='2'
+os_variant='almalinux8' # almalinux8, almalinux9, rhel9.0, centos-stream9
+disk='/var/lib/libvirt/images/rhel-8.7-beta-1-snapshot.qcow2'
+CI_DATA='/var/lib/libvirt/images/cidata.iso'
+
+virt-install \
+    --connect qemu:///system \
+    --name "${name}" \
+    --memory "${memory}" \
+    --vcpus "${vcpus}" \
+    --cpu host-passthrough \
+    --os-variant "${os_variant}" \
+    --disk "${disk}" \
+    --disk "${CI_DATA}",device=cdrom \
+    --virt-type kvm
