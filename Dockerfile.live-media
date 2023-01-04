@@ -34,11 +34,11 @@ RUN dnf install -y epel-release && \
     dnf clean all; \
     # Temp fix for dnf until fix is ported to EL8
     # imgcreate.errors.MountError: Unable to unmount filesystem at /var/tmp/imgcreate-XXXXXX/install_root/var/cache/dnf.
-    cwd=$PWD \
-    cd /mnt/system-root/usr/lib/python3.6/site-packages/dnf/ ;\
-    mv base.py base.py_saved ;\
-    curl -LO https://raw.githubusercontent.com/AlmaLinux/sig-livemedia/build-fix/work/scripts/base.py ; \
-    cd $cwd ; \
+#    cwd=$PWD \
+#    cd /mnt/system-root/usr/lib/python3.6/site-packages/dnf/ ;\
+#    mv base.py base.py_saved ;\
+#    curl -LO https://raw.githubusercontent.com/AlmaLinux/sig-livemedia/build-fix/work/scripts/base.py ; \
+#    cd $cwd ; \
     # cp /etc/yum.repos.d/e* /mnt/system-root/etc/yum.repos.d/ ; \
     /bin/date +%Y%m%d_%H%M > /mnt/system-root/etc/BUILDTIME ;\
     # set DNF infra variable to container for compatibility with CentOS
